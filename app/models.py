@@ -9,8 +9,8 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=8,decimal_places=2)
 
 class User(AbstractUser):
-     email=models.EmailField(unique=True)
+    email=models.EmailField(unique=True)
      
-     USERNAME_FIELD="email"
-     REQUIRED_FIELDS = ['username', 'password']
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 

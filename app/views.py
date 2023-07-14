@@ -1,12 +1,16 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated  # <-- Here
 from rest_framework.authtoken.models import Token
 from .models import Book
-from .serializers import BookSerializer,UserSerializer
+from .serializers import BookSerializer,RegisterSerializer
 from django.contrib.auth.models import User
-from rest_framework.authentication import TokenAuthentication
+
 from django.core.exceptions import PermissionDenied
+from rest_framework import status
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 
 class BookListCreateView(APIView):
@@ -16,30 +20,30 @@ class BookListCreateView(APIView):
         serializer = BookSerializer(books, many=True)
         return Response({'status':200,'payload':serializer.data})
 
-#class RegisterUser(APIView):    
-#    permission_classes = [IsAuthenticated]
-#    def post(self, request):
-#        serializer =UserSerializer(data=request.data)
-#        if serializer.is_valid():
-#            serializer.save()
-#            user = User.objects.get(username=serializer.data['username'])
-#            token, create = Token.objects.get_or_create(user=user)
-#            return Response({'status': 201, 'payload': serializer.data, 'token': token.key,'user_id':user.pk})
-#        return Response({'status': 400, 'errors': serializer.errors})
-#
-class RegisterUser(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'status': 201, 'payload': serializer.data, 'token': token.key, 'user_id': user.pk})
-        return Response({'status': 400, 'errors': serializer.errors})
-    
+class RegisterAPIView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_201_CREATED:
+            return Response({'status': status.HTTP_201_CREATED, 
+                             #'payload': response.data,
+                              'message': 'User created.'})
+        return Response({'status': status.HTTP_400_BAD_REQUEST, 'errors': response.data})
+
+
+
+
+
+
+
+
+#class RegisterUser(APIView):
+#    permission_classes = [IsAuthenticated]
+
+
 class CreateBook(APIView):
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -49,7 +53,7 @@ class CreateBook(APIView):
             return Response({'status': 201, 'payload': serializer.data})
         return Response({'status': 400, 'errors': serializer.errors})
     
-    #authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     #permission_classes = [IsAuthenticated]
     def put(self,request,book_id):
         try:
